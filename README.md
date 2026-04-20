@@ -30,14 +30,12 @@ src/
 ## 🚀 快速开始
 ### 1. 克隆项目
 ```bash
-git clone <仓库地址>
-cd <项目名称>
+git clone https://github.com/huangzizhu/vue-template
 ```
 
 ### 2. 安装依赖
 ```bash
 npm install
-# 或 yarn install / pnpm install
 ```
 
 ### 3. 启动开发服务
