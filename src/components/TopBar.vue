@@ -1,302 +1,568 @@
 <template>
-  <!-- 全局顶部状态栏 -->
-  <div class="topbar-container">
-    <!-- 左侧占位（可加logo/标题） -->
-    <div class="topbar-left">
-      <span class="app-title">前端模板系统</span>
-    </div>
-
-    <!-- 右侧信息区：时间/日期 + 头像 -->
-    <div class="topbar-right">
-      <!-- 时间日期显示 -->
-      <div class="datetime-wrapper">
-        <span class="time">{{ currentTime }}</span>
-        <span class="date">{{ currentDate }}</span>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+          </div>
+          <span class="brand-text">{{ appTitle }}</span>
+        </div>
       </div>
 
-      <!-- 用户头像 -->
-      <div class="avatar-wrapper" @click="toggleAvatarMenu">
-        <img
-            :src="avatarUrl"
-            alt="用户头像"
-            class="user-avatar"
-        />
-        <!-- 头像下拉菜单（点击显示/隐藏） -->
-        <div class="avatar-menu" v-show="showAvatarMenu">
-          <ul>
-            <li class="menu-item">
-              <avatar theme="outline" size="24" fill="#333" :strokeWidth="2" class="menu-icon"/>
-              <span>个人中心</span>
-            </li>
-            <li class="menu-item">
-              <setting theme="outline" size="24" fill="#333" :strokeWidth="2" class="menu-icon"/>
-              <span>设置</span>
-            </li>
-            <li class="menu-item divider"></li>
-            <li class="menu-item logout">
-              <logout theme="outline" size="24" fill="#ff3b30" :strokeWidth="2" class="menu-icon" />
-              <span @click="handleLogout">退出登录</span>
-            </li>
-          </ul>
+      <div class="topbar-right">
+        <div class="datetime">
+          <span class="datetime-time">{{ currentTime }}</span>
+          <span class="datetime-date">{{ currentDate }}</span>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <button class="theme-toggle" @click="handleToggleTheme" :aria-label="isDark ? '切换到亮色模式' : '切换到暗色模式'">
+          <div class="theme-toggle-track" :class="{ 'is-dark': isDark }">
+            <div class="theme-toggle-thumb">
+              <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+              <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            </div>
+            <span class="star star-1"></span>
+            <span class="star star-2"></span>
+            <span class="star star-3"></span>
+            <span class="star star-4"></span>
+          </div>
+        </button>
+
+        <div class="divider-v"></div>
+
+        <div class="avatar-area" ref="avatarAreaRef">
+          <button class="avatar-btn" @click.stop="toggleMenu">
+            <img :src="avatarUrl" alt="avatar" class="avatar-img" />
+            <svg class="chevron" :class="{ open: showMenu }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+
+          <Transition name="menu">
+            <div class="dropdown" v-if="showMenu" @click.stop>
+              <div class="dropdown-header">
+                <img :src="avatarUrl" alt="avatar" class="dropdown-avatar" />
+                <div class="dropdown-user">
+                  <span class="dropdown-name">用户名</span>
+                  <span class="dropdown-email">user@example.com</span>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-items">
+                <button class="dropdown-item" @click="handleMenuAction('profile')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>个人中心</span>
+                </button>
+                <button class="dropdown-item" @click="handleMenuAction('settings')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  <span>设置</span>
+                </button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item danger" @click="handleLogout">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>退出登录</span>
+              </button>
+            </div>
+          </Transition>
         </div>
       </div>
     </div>
-  </div>
+  </header>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useTheme } from '../composables/useTheme'
 
-// 路由实例
 const router = useRouter()
+const theme = useTheme()
 
-// 响应式数据
-// 头像菜单显示状态
-const showAvatarMenu = ref<boolean>(false)
-// 头像地址（可替换为真实接口地址）
-const avatarUrl = ref<string>('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
-// 定时器标识
-let timer: NodeJS.Timeout | null = null
-// 响应式时间戳（核心：驱动computed更新）
-const nowTimestamp = ref<number>(Date.now())
+const appTitle = '前端模板系统'
+const showMenu = ref(false)
+const isDark = ref(theme.isDark())
+const avatarUrl = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+const avatarAreaRef = ref<HTMLElement | null>(null)
 
-// 格式化时间：HH:MM:SS（依赖nowTimestamp，每秒更新）
+let timer: ReturnType<typeof setInterval> | null = null
+const nowTs = ref(Date.now())
+
 const currentTime = computed(() => {
-  const now = new Date(nowTimestamp.value)
-  return now.toTimeString().split(' ')[0].slice(0, 8)
+  const d = new Date(nowTs.value)
+  return d.toTimeString().slice(0, 8)
 })
 
-// 格式化日期：YYYY-MM-DD 星期X（依赖nowTimestamp）
 const currentDate = computed(() => {
-  const now = new Date(nowTimestamp.value)
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-  const week = weekDays[now.getDay()]
-  return `${year}-${month}-${day} ${week}`
+  const d = new Date(nowTs.value)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const weeks = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return `${y}-${m}-${day} ${weeks[d.getDay()]}`
 })
 
-// 切换头像菜单显示/隐藏
-const toggleAvatarMenu = () => {
-  showAvatarMenu.value = !showAvatarMenu.value
+const handleToggleTheme = () => {
+  theme.toggleTheme()
+  isDark.value = theme.isDark()
 }
 
-// 点击页面其他区域关闭菜单
-const closeAvatarMenu = (e: MouseEvent) => {
-  const target = e.target as HTMLElement
-  if (!target.closest('.avatar-wrapper')) {
-    showAvatarMenu.value = false
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+const handleMenuAction = (action: string) => {
+  showMenu.value = false
+  if (action === 'profile') router.push('/profile')
+  if (action === 'settings') router.push('/settings')
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('userInfo')
+  sessionStorage.removeItem('userInfo')
+  showMenu.value = false
+  router.push('/login')
+}
+
+const onClickOutside = (e: MouseEvent) => {
+  if (avatarAreaRef.value && !avatarAreaRef.value.contains(e.target as Node)) {
+    showMenu.value = false
   }
 }
 
-// 退出登录处理
-const handleLogout = () => {
-  // 清除用户信息
-  localStorage.removeItem('userInfo')
-  sessionStorage.removeItem('userInfo')
-  // 关闭菜单
-  showAvatarMenu.value = false
-  // 跳转到登录页
-  router.push('/login')
-  alert('已退出登录')
-}
-
-// 生命周期：挂载时启动定时器 + 监听点击事件
 onMounted(() => {
-  // 修复：每秒更新时间戳，驱动computed重新计算
-  timer = setInterval(() => {
-    nowTimestamp.value = Date.now()
-  }, 1000)
-  // 监听全局点击事件，关闭菜单
-  document.addEventListener('click', closeAvatarMenu)
+  timer = setInterval(() => { nowTs.value = Date.now() }, 1000)
+  document.addEventListener('click', onClickOutside)
 })
 
-// 生命周期：卸载时清除定时器 + 移除监听
 onUnmounted(() => {
   if (timer) clearInterval(timer)
-  document.removeEventListener('click', closeAvatarMenu)
+  document.removeEventListener('click', onClickOutside)
 })
 </script>
 
 <style scoped>
-/* 顶部状态栏容器（全局置顶） */
-.topbar-container {
+.topbar {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 101; /* 高于侧边栏z-index:100 */
-  width: 100vw;
-  height: 70px; /* 加高一点，更宽松 */
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(200, 200, 200, 0.2);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 32px; /* 增加左右内边距 */
-  box-sizing: border-box;
+  right: 0;
+  z-index: 200;
+  height: var(--topbar-height);
+  background: var(--color-bg-elevated);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-/* 左侧标题 */
+.topbar-inner {
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+
 .topbar-left {
   display: flex;
   align-items: center;
 }
 
-.app-title {
-  font-size: 20px; /* 加大字体 */
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: 0.5px; /* 增加字间距 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* 右侧信息区 */
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
+}
+
+.brand-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.3px;
+  transition: color 0.3s ease;
+}
+
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 40px; /* 大幅增加时间和头像的间距 */
+  gap: 20px;
 }
 
-/* 时间日期样式 */
-.datetime-wrapper {
+.datetime {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  color: #1d1d1f;
-  gap: 4px; /* 时间和日期之间增加间距 */
-  min-width: 120px; /* 固定宽度，防止抖动 */
+  gap: 1px;
+  min-width: 130px;
 }
 
-.time {
-  font-size: 18px; /* 加大时间字体 */
+.datetime-time {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.datetime-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
-.date {
-  font-size: 14px; /* 加大日期字体 */
-  color: #86868b;
+.divider-v {
+  width: 1px;
+  height: 28px;
+  background: var(--color-border-solid);
+  border-radius: 1px;
+  transition: background 0.3s ease;
 }
 
-/* 头像容器（相对定位，用于下拉菜单） */
-.avatar-wrapper {
-  position: relative;
+.theme-toggle {
+  border: none;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 用户头像（苹果风格圆形） */
-.user-avatar {
-  width: 48px; /* 加大头像 */
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+.theme-toggle-track {
+  position: relative;
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease;
+  overflow: hidden;
 }
 
-.avatar-wrapper:hover .user-avatar {
-  transform: scale(1.05);
-}
-
-/* 头像下拉菜单（毛玻璃+圆角） */
-.avatar-menu {
+.theme-toggle-thumb {
   position: absolute;
-  top: calc(100% + 12px); /* 增加菜单与头像的间距 */
-  right: 0;
-  width: 220px; /* 加宽菜单 */
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px; /* 加大圆角 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(200, 200, 200, 0.2);
-  padding: 12px 0; /* 增加上下内边距 */
-  z-index: 102;
-  /* 菜单展开动画 */
-  animation: fadeIn 0.2s ease;
-}
-
-/* 菜单动画 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 菜单项 */
-.menu-item {
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  padding: 12px 24px; /* 大幅增加内边距 */
-  color: #1d1d1f;
-  font-size: 16px; /* 加大菜单字体 */
+  justify-content: center;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s ease, box-shadow 0.4s ease;
+  z-index: 2;
+}
+
+.theme-toggle-thumb .icon-sun {
+  position: absolute;
+  color: #f59e0b;
+  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle-thumb .icon-moon {
+  position: absolute;
+  color: #6366f1;
+  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fbbf24;
+  opacity: 0;
+  transition: opacity 0.4s ease 0.15s, transform 0.4s ease 0.15s;
+  z-index: 1;
+}
+
+.star-1 {
+  top: 6px;
+  right: 8px;
+  transform: scale(0);
+  transition-delay: 0.1s;
+}
+
+.star-2 {
+  top: 14px;
+  right: 5px;
+  width: 2px;
+  height: 2px;
+  transform: scale(0);
+  transition-delay: 0.2s;
+}
+
+.star-3 {
+  bottom: 7px;
+  right: 10px;
+  width: 2px;
+  height: 2px;
+  transform: scale(0);
+  transition-delay: 0.15s;
+}
+
+.star-4 {
+  top: 10px;
+  right: 14px;
+  width: 2px;
+  height: 2px;
+  transform: scale(0);
+  transition-delay: 0.25s;
+}
+
+.theme-toggle-track.is-dark {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-track.is-dark .theme-toggle-thumb {
+  transform: translateX(28px);
+  background: #1e1b4b;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 8px rgba(99, 102, 241, 0.3);
+}
+
+.theme-toggle-track.is-dark .icon-sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+.theme-toggle-track.is-dark .icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle-track.is-dark .star {
+  opacity: 1;
+  transform: scale(1);
+  background: #e0e7ff;
+}
+
+.theme-toggle-track.is-dark .star-1 {
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.theme-toggle-track.is-dark .star-2 {
+  animation: twinkle 2s ease-in-out infinite 0.5s;
+}
+
+.theme-toggle-track.is-dark .star-3 {
+  animation: twinkle 2s ease-in-out infinite 1s;
+}
+
+.theme-toggle-track.is-dark .star-4 {
+  animation: twinkle 2s ease-in-out infinite 1.5s;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.6); }
+}
+
+.avatar-area {
+  position: relative;
+}
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.2s ease;
-  gap: 16px; /* 图标和文字之间的间距（核心优化） */
 }
 
-.menu-item:hover {
-  background: rgba(245, 245, 247, 0.8);
+.avatar-btn:hover {
+  background: var(--color-primary-ghost);
 }
 
-/* 菜单图标 */
-.menu-icon {
-  flex-shrink: 0; /* 防止图标压缩 */
-  color: #86868b;
+.avatar-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid var(--color-avatar-border);
+  transition: border-color 0.3s ease;
 }
 
-/* 分割线 */
-.divider {
+.chevron {
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: var(--color-bg-surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  z-index: 210;
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+
+.menu-enter-active {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.menu-leave-active {
+  transition: all 0.15s cubic-bezier(0.4, 0, 1, 1);
+}
+.menu-enter-from {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
+  transition: background 0.3s ease;
+}
+
+:global([data-theme="dark"]) .dropdown-header {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.06) 0%, rgba(167, 139, 250, 0.06) 100%);
+}
+
+.dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.dropdown-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.dropdown-email {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  transition: color 0.3s ease;
+}
+
+.dropdown-divider {
   height: 1px;
-  background: rgba(200, 200, 200, 0.2);
-  margin: 8px 0; /* 增加分割线上下间距 */
-  padding: 0 24px; /* 让分割线不贴边 */
-  cursor: default;
+  background: var(--color-divider);
+  margin: 6px 8px;
+  transition: background 0.3s ease;
 }
 
-.divider:hover {
-  background: rgba(200, 200, 200, 0.2);
+.dropdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* 退出登录项 */
-.logout {
-  color: #ff3b30;
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
 }
 
-.logout .menu-icon {
-  color: #ff3b30;
+.dropdown-item:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
 }
 
-.logout:hover {
-  background: rgba(255, 59, 48, 0.1);
+.dropdown-item.danger {
+  color: var(--color-danger);
 }
 
-/* 适配小屏幕 */
+.dropdown-item.danger:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-hover);
+}
+
 @media (max-width: 768px) {
-  .datetime-wrapper {
-    display: none;
-  }
-
-  .app-title {
-    font-size: 18px;
-  }
-
-  .topbar-container {
-    padding: 0 20px;
-    height: 60px;
-  }
-
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-  }
+  .datetime { display: none; }
+  .divider-v:first-of-type { display: none; }
+  .topbar-inner { padding: 0 16px; }
+  .brand-text { font-size: 15px; }
 }
 </style>
