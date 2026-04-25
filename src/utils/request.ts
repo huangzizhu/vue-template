@@ -1,31 +1,44 @@
 import axios from 'axios';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { resetAuthChecked } from '../router';
+import { useNotification } from '../composables/useNotification';
 
-// 创建 Axios 实例
 const request = axios.create({
-    baseURL: '/api',  // 开发环境代理
+    baseURL: '/api',
     timeout: 5000,
+    withCredentials: true,
 });
 
-// 请求拦截器
+let isRefreshing = false;
+let refreshFailCount = 0;
+let pendingRequests: Array<{
+    resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void;
+    reject: (reason?: unknown) => void;
+    requestConfig: InternalAxiosRequestConfig & { _retry?: boolean };
+}> = [];
+
+function onRefreshed() {
+    pendingRequests.forEach(({ resolve, requestConfig }) => {
+        resolve(request(requestConfig));
+    });
+    pendingRequests = [];
+}
+
+function onRefreshFailed(error: unknown) {
+    pendingRequests.forEach(({ reject }) => {
+        reject(error);
+    });
+    pendingRequests = [];
+}
+
+function redirectToLogin() {
+    pendingRequests = [];
+    resetAuthChecked();
+    window.location.href = '/login';
+}
+
 request.interceptors.request.use(
-    (config: AxiosRequestConfig): AxiosRequestConfig => {
-        // 确保 headers 存在
-        if (!config.headers) {
-            config.headers = {};
-        }
-
-        const accessToken = localStorage.getItem('accessToken');
-        const refreshToken = localStorage.getItem('refreshToken');
-
-        if (accessToken) {
-            config.headers['Authorization'] = `Bearer ${accessToken}`;
-        }
-
-        if (refreshToken) {
-            config.headers['X-Refresh-Token'] = refreshToken;
-        }
-
+    (config: InternalAxiosRequestConfig) => {
         return config;
     },
     (error) => {
@@ -33,14 +46,57 @@ request.interceptors.request.use(
     }
 );
 
-// 响应拦截器
 request.interceptors.response.use(
     (response: AxiosResponse) => {
-        // 直接返回响应
         return response;
     },
-    (error) => {
-        // TODO: 后端实装 401 处理
+    async (error) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+        if (error.response?.status === 401) {
+            const code = error.response.data?.code;
+
+            if ((code === 40101 || code === 40102) && !originalRequest._retry) {
+                originalRequest._retry = true;
+
+                if (isRefreshing) {
+                    return new Promise<AxiosResponse>((resolve, reject) => {
+                        pendingRequests.push({
+                            resolve,
+                            reject,
+                            requestConfig: originalRequest,
+                        });
+                    });
+                }
+
+                isRefreshing = true;
+
+                try {
+                    await axios.post('/api/user/refresh', {}, { withCredentials: true });
+                    refreshFailCount = 0;
+                    isRefreshing = false;
+                    onRefreshed();
+                    return request(originalRequest);
+                } catch (refreshError) {
+                    refreshFailCount += 1;
+                    isRefreshing = false;
+                    onRefreshFailed(refreshError);
+
+                    if (refreshFailCount >= 3) {
+                        const notification = useNotification();
+                        notification.warning('登录已过期', '请重新登录');
+                        redirectToLogin();
+                    }
+
+                    return Promise.reject(refreshError);
+                }
+            }
+
+            if (code === 40103 || code === 40104) {
+                redirectToLogin();
+            }
+        }
+
         return Promise.reject(error);
     }
 );
